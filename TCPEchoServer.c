@@ -77,6 +77,11 @@ void HandleTCPClient(int clntSocket)
     int recvMsgSize;                    /* Size of received message */
     int i;
 
+    char *xVal;
+    char *yVal;
+	
+    int xt = atoi(xVal);
+    int yt = atoi(yVal);
 
     /* Receive message from client */
     if ((recvMsgSize = recv(clntSocket, echoBuffer, RCVBUFSIZE, 0)) < 0)
@@ -86,7 +91,7 @@ void HandleTCPClient(int clntSocket)
     while (recvMsgSize > 0)      /* zero indicates end of transmission */
     {
 	/* Print receiving data to Monitor */
-	printf("Data yang diterima: %s\n",echoBuffer); 
+	printf("Data yang diterima: %s %d %d\n",echoBuffer, xt, yt); 
 
         /* Echo message back to client */        
 	if (send(clntSocket, echoBuffer, recvMsgSize, 0) != recvMsgSize)
