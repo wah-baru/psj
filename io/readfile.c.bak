@@ -1,0 +1,44 @@
+#include <stdio.h>
+
+#define MAX_SIZE 255
+
+void main()
+{
+	FILE * fileinput;
+	char tmpstr[MAX_SIZE];
+	if ((fileinput = fopen("input.txt", "r")) == NULL)
+	{
+		fprintf(stderr, "Tidak bisa membuka input.txt");
+		exit(0);
+	}
+
+	while (!feof(fileinput))
+	{
+		fscanf(fileinput, "%s", &tmpstr);
+		if (strcmp(tmpstr, "10") == 0)
+		{
+			fscanf(fileinput, "%s", &tmpstr);
+			printf("Nama : %s\n", tmpstr);
+		}
+
+		if (strcmp(tmpstr, "20") == 0)
+		{
+			fscanf(fileinput, "%s", &tmpstr);
+			printf("Kota : %s\n", tmpstr);
+		}
+
+		if (strcmp(tmpstr, "30") == 0)
+		{
+			fscanf(fileinput, "%s", &tmpstr);
+			printf("Provinsi : %s\n", tmpstr);
+		}
+
+		if (strcmp(tmpstr, "40") == 0)
+		{
+			fscanf(fileinput, "%s", &tmpstr);
+			printf("Negara : %s\n", tmpstr);
+		}
+	}
+
+	fclose(fileinput);
+}
