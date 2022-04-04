@@ -1,0 +1,285 @@
+#include <stdio.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <string.h>
+#include <errno.h>
+#include <stdlib.h>
+
+void openfile(void);
+void readfile(void);
+int fd = 0;
+
+void readfile(void) {
+unsigned char ichar;
+unsigned char dataread[2];
+int i, ifd;
+while (1) {
+ifd = read(fd, &ichar, 1);
+printf("%d\n", ichar);
+if (ichar == 101) {
+printf("Data ke satu: ");
+ifd = read(fd, &dataread, 2);
+printf("%.2x%.2x\n", dataread[0], dataread[1]);
+}
+if (ichar == 102) {
+printf("Data ke dua: ");
+ifd = read(fd, &dataread, 2);
+printf("%.2x%.2x\n", dataread[0], dataread[1]);
+}
+if (ichar == 103) {
+printf("Data ke tiga: ");
+ifd = read(fd, &dataread, 2);
+printf("%.2x%.2x\n", dataread[0], dataread[1]);
+}
+sleep(1);
+}
+close(fd);
+}
+
+void openfile(void) {
+if ((fd = open("/dev/ttyACM0", O_RDONLY)) < 0) {
+perror("Error Open File");
+exit(1);
+}
+}
+
+int main()
+{
+openfile();
+readfile();
+return 0;
+}
+//^nomor 3 buat main.c
+
+----------------------------------------------
+void setup() {
+// put your setup code here, to run once:
+Serial.begin(9600);
+}
+
+void loop() {
+// put your main code here, to run repeatedly:
+Serial.write(101);
+Serial.write(0xAB);
+Serial.write(0x00);
+delay(1000);
+
+Serial.write(102);
+Serial.write(0xAB);
+Serial.write(0x01);
+delay(1000);
+
+Serial.write(103);
+Serial.write(0xAB);
+Serial.write(0x02);
+delay(1000);
+}
+//^ini buat arduinonya nomor 3
+//jalanin dulu arduinonya, baru jalanin main.c
+
+
+
+--------------
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+
+void error(const char *msg){
+perror(msg);
+exit(1);
+}
+
+int main(int argc,char *argv[]){
+int sockfd, portno, n;
+struct sockaddr_in serv_addr;
+struct hostent *server;
+
+char buffer[256];
+if(argc < 3){
+fprintf(stderr, "Gunakan %s port hostname atau servermu\n", argv[0]);
+exit(1);
+}
+
+portno = atoi(argv[2]);
+sockfd = socket(AF_INET,SOCK_STREAM,0);
+
+if(sockfd < 0){
+error("Error membuka soket");
+}
+
+server = gethostbyname(argv[1]);
+if(server == NULL){
+fprintf(stderr, "Tidak ada host");
+exit(0);
+}
+
+bzero((char *) &serv_addr, sizeof(serv_addr));
+serv_addr.sin_family = AF_INET;
+bcopy((char *) server->h_addr, (char *) &serv_addr.sin_addr.s_addr, server->h_length);
+serv_addr.sin_port = htons(portno);
+if(connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0){
+error("Sayang sekali, koneksi gagal");
+}
+
+int num1, num2, choice, ans;
+
+//Reading Server String
+S: 
+bzero(buffer,256);
+num1 = read(sockfd,buffer,256);
+if(num1 < 0){
+error("Error baca dari soket");
+}
+
+printf("Server - %s\n",buffer);
+scanf("%d",&num1);
+write(sockfd,&num1,sizeof(int));
+
+bzero(buffer,256);
+num2 = read(sockfd,buffer,256);
+if(num2 < 0){
+error("Error baca dari soket");
+}
+
+printf("Server - %s\n",buffer);
+scanf("%d",&num2);
+write(sockfd,&num2,sizeof(int));
+
+bzero(buffer,256);
+choice = read(sockfd,buffer,256);
+if(choice < 0){
+error("Error baca dari soket");
+}
+
+printf("Server - %s\n",buffer);
+scanf("%d",&choice);
+write(sockfd,&choice,sizeof(int));
+
+if(choice == 5){
+goto Q;
+}
+
+read(sockfd,&ans,sizeof(int));
+printf("Server: Jawabannya = %d\n",ans);
+
+if(choice != 5){
+goto S;
+}
+
+Q: printf("Anda memilih keluar\nBerhasil keluar");
+close(sockfd);
+return 0;
+}
+//^buat client.c nomor 1
+
+--------------
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+
+void error(const char *msg){
+perror(msg);
+exit(1);
+}
+
+// argc adalah total jumlah parameter yang kita lalui
+int main(int argc,char *argv[]){
+if(argc < 2){
+fprintf(stderr , "Tidak diberikan port. Program diterminasi \n");
+exit(1);
+}
+
+int sockfd,newsockfd,portno,n;
+char buffer[255]; // untuk menyimpan msg yang terkirim
+
+struct sockaddr_in serv_addr , cli_addr;
+socklen_t clilen; //socklen_t adalah datatype di socket.h 32 bit
+
+sockfd = socket(AF_INET,SOCK_STREAM,0);
+if(sockfd < 0){
+// jika sock fd hasilnya gagal
+error("Error membuka soket");
+}
+
+bzero((char *) &serv_addr, sizeof(serv_addr)); // kode ini clear semua data dan referensinya
+
+portno = atoi(argv[1]);
+serv_addr.sin_family = AF_INET;
+serv_addr.sin_addr.s_addr = INADDR_ANY;
+serv_addr.sin_port = htons(portno);
+
+if(bind(sockfd, (struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0){
+error("Binding gagal");
+}
+
+// server mencoba untuk melakukan koneksi
+
+listen(sockfd,5);
+clilen = sizeof(cli_addr);
+
+newsockfd = accept(sockfd,(struct sockaddr *) &cli_addr , & clilen);
+if(newsockfd < 0){
+error("Error saat user berusaha accept");
+}
+
+int num1,num2,ans,choice;
+S: num1 = write(newsockfd,"Masukkan angka pertama: ", strlen("Masukkan angka pertama: "));
+if(num1 < 0){
+error("Error menulis soket");
+}
+read(newsockfd,&num1,sizeof(int));
+printf("Klien nomor 1 adalah: %d\n",num1);
+
+num2 = write(newsockfd,"Masukkan angka kedua: ", strlen("Masukkan angka kedua: "));
+if(num2 < 0){
+error("Error menulis soket");
+}
+read(newsockfd,&num2,sizeof(int));
+printf("Klien nomor 2 adalah: %d\n",num2);
+
+choice = write(newsockfd,"Mau diapakan:\n1. Tambah\n2. Kurangi\n3. Bagi\n4. Kali\n5. Keluar", strlen("Mau diapakan:\n1. Tambah\n2. Kurangi\n3. Bagi\n4. Kali\n5. Keluar"));
+if(choice < 0){
+error("Error dalam menulis");
+}
+read(newsockfd,&choice,sizeof(int));
+printf("Client - Pilihanmu: %d\n", choice);
+
+switch(choice){
+case 1:
+ans = num1 + num2;
+break;
+case 2:
+ans = num1-num2;
+break;
+case 3:
+ans = num1/num2;
+break;
+case 4:
+ans = num1*num2;
+break;
+case 5 :
+goto Q;
+break;
+}
+
+write(newsockfd,&ans,sizeof(int));
+if(choice != 5){
+goto S;
+}
+
+Q: 
+close(newsockfd);
+close(sockfd);
+return 0;
+}
+//^buat server.c nomor 1
